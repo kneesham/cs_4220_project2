@@ -3,7 +3,8 @@ import class ObjectLibrary.Player
 import enum ObjectLibrary.Die
 
 protocol PigModelDelegate: class {
-    // TODO: - Define a method to update the UI in the event of a roll here
+    //  - Define a method to update the UI in the event of a roll here
+    func updateUIRolled(image: String)
     func update(_ pointsRolled: Int)
     func updateScore(for player: Player)
     func willChange(player: Player)
@@ -16,6 +17,8 @@ final class PigModel {
 
     private let players: [Player]
     private weak var delegate: PigModelDelegate?
+    
+    
     /**
      // HINT: -
      -
