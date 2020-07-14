@@ -1,100 +1,111 @@
 import UIKit
 import ObjectLibrary
+import AVFoundation
 
 final class PigViewController: UIViewController {
-//     MARK: - IBOutlets
-//
-//    /**
-//    - Connect `IBOutlet`s here
-//     -
-//     */
+
     @IBOutlet weak var gameImage: UIImageView!
     @IBOutlet weak var gameLogText: UILabel!
     @IBOutlet weak var pointsRolled: UILabel!
     @IBOutlet weak var playerOnePoints: UILabel!
     @IBOutlet weak var playerTwoPoints: UILabel!
+    @IBOutlet weak var playerOneLabel: UILabel!
+    @IBOutlet weak var playerTwoLabel: UILabel!
     
-    
-    // MARK: - Properties
-
-    /**
-     // TODO: - Declare any properties needed here
-     -
-     // HINT: - You will need at least a model.
-     -
-     */
+    private let systemSoundID: SystemSoundID = 1116
     private var model: PigModel!
-    
+    private var images: [UIImage] = [UIImage(named: "one")!, UIImage(named: "four")!, UIImage(named: "three")!,
+                                     UIImage(named: "two")!, UIImage(named: "five")!, UIImage(named: "six")! ]
+
     override func viewDidLoad() {
         super.viewDidLoad()
-        model = PigModel(delegate: self)
-        //instansiating the pig model.
         
-        /**
-         // TODO: - Perform any additional setup after loading the view here
-         -
-         */
+        model = PigModel(delegate: self)
+        model.beginNewGame()
+        //instansiating the pig model.
     }
     
-    // MARK: - IBActions
-
     @IBAction func resetButton(_ sender: UIButton) {
      // this might need to be reconnected
-        print("the reset button was pressed!")
+        sender.pulsate()
+        model?.beginNewGame()
+        model?.resetPointsRolled()
+        AudioServicesPlaySystemSound(1152)
+        
     }
     
     @IBAction func rollButton(_ sender: UIButton) {
-        print("the roll button was pressed!")
-        
+        sender.pulsate()
+        AudioServicesPlaySystemSound(1109)
+        model?.roll()
     }
     
     @IBAction func holdButton(_ sender: UIButton) {
-        print("the hold button was pressed!")
+        sender.pulsate()
+        if self.pointsRolled.text != "0" {
+            model?.hold()
+            AudioServicesPlaySystemSound(1150)
+        }
     }
     
-    // MARK: - Methods
-
-    /**
-     // TODO: - If you have any other methods, write them here
-     -
-     */
+    func disableActions() {
+        self.view.isUserInteractionEnabled = false
+    }
+    func enableActions() {
+        self.view.isUserInteractionEnabled = true
+    }
 }
 
-// MARK: - PigModelDelegate
-
-/** -
- 
- // HINT: -
- -
- - For the `function notifyWinner(alerTitle:,message:,actionTitle:)`, try using the`UIViewController`
- extension `func presentSingleActionAlert(alerTitle:, message:, actionTitle:, completion:)` to notify
- the user of the game's outcome.
- */
-
 extension PigViewController: PigModelDelegate {
+    
     func willChange(player: Player) {
-        print("will change")
+        if player.id == .one {
+             self.playerOneLabel.textColor = UIColor(displayP3Red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+             self.playerTwoLabel.textColor = UIColor(named: "black")
+        } else {
+             self.playerTwoLabel.textColor = UIColor(displayP3Red: 1.0, green: 0.0, blue: 0.0, alpha: 1.0)
+             self.playerOneLabel.textColor = UIColor(named: "black")
+        }
     }
     
     func updateUIRolled(image: String) {
-        print("update the ui")
+        disableActions()
+        gameImage.animationRepeatCount = 2
+        gameImage.animationImages = images
+        gameImage.animationDuration = 1
+        gameImage.startAnimating()
+    
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.7) {
+            self.gameImage.image = UIImage(named: image)
+            
+        }
+        
     }
     
     func update(_ pointsRolled: Int) {
-        print("update")
+        self.pointsRolled.text = "\(pointsRolled)"
+        self.enableActions()
     }
     
     func updateScore(for player: Player) {
-        print("updateScore")
+        
+        self.pointsRolled.text = "0"
+        // NOTE: set the points rolled to 0 if the player's score is updated.
+        if player.id == .one {
+            playerOnePoints.text = "\(player.totalPoints)"
+            
+        } else {
+            playerTwoPoints.text = "\(player.totalPoints)"
+        }
     }
     
     func updateGameLog(text: String) {
-        print("update game log")
+        gameLogText.text = text
     }
     
     func notifyWinner(alerTitle: String, message: String, actionTitle: String) {
-        print("notify winner")
+        AudioServicesPlaySystemSound(1036)
+        presentSingleActionAlert(alerTitle: alerTitle, message: message, actionTitle: actionTitle, completion: { self.model?.beginNewGame() })
     }
-    
     
 }
